@@ -1,3 +1,72 @@
-🔍 Mini Search Engine: From Text to Meaning🚀 Approach & DesignThe core objective of this project was to build a retrieval system that balances speed with accuracy without using external libraries. The system follows a classic Information Retrieval (IR) pipeline:Text Preprocessing: Every document in the 20 Newsgroups dataset is cleaned. We use a manual pipeline that tokenizes text into words, converts them to lowercase, and strips away punctuation and special characters using isalnum.Inverted Indexing: Instead of searching files linearly, we build a map where each unique word points to a "Postings List"—a list of documents containing that word and the frequency of its occurrence.Manual TF-IDF Ranking: To provide "meaningful" results, we implemented Term Frequency (TF) multiplied by Inverse Document Frequency (IDF). This ensures that documents containing rare, highly relevant query words rank higher than those with common words.Persistence: To optimize startup time, the engine saves the processed index into a binary file (index.bin), allowing instant loading for subsequent searches.🛠️ Data Structures UsedTo satisfy the requirements of "efficiency and scalability," the following standard data structures were utilized:std::unordered_map<string, vector<Posting>>: Used for the Inverted Index. We chose unordered_map (Hash Table) over a standard map to achieve $O(1)$ average time complexity for word lookups.std::unordered_set<string>: Used for Stopwords. This allows for near-instant checking of whether a word should be ignored.std::vector<SearchResult>: Used to store and sort the final ranked results before displaying them to the user.struct Posting { int docID; int count; }: A custom structure to store the frequency of words per document, supporting the TF component of our ranking math.📊 Time & Space ComplexityTime ComplexityOperationBig O NotationDescriptionIndexing$O(D \times W)$$D$ is total documents, $W$ is average words per document. Every word must be visited once.Searching$O(Q + K \log K)$$Q$ is query length. $K$ is the number of matched documents. Sorting results for ranking dominates this phase.Lookup$O(1)$Hash table (unordered_map) provides constant time lookup for query terms.Space ComplexityComponentBig O NotationDescriptionInverted Index$O(V + P)$$V$ is the total vocabulary (unique words) and $P$ is the total number of postings (word-document pairs).Stopwords$O(S)$Constant space for the pre-defined list of ignored common words.💻 How to Run the ProjectPrerequisitesA C++ compiler (GCC/MinGW, Clang, or MSVC).The 20 Newsgroups Dataset placed in data/20_newsgroups/20_newsgroups.StepsCompile:Bashg++ -O3 main.cpp -o MiniSearchEngine
-Execution:Bash./MiniSearchEngine
-Indexing Phase: On the first run, the program scans the dataset and creates index.bin. Subsequent runs will load this file instantly.Search: Enter a word or sentence.Termination: Type exit at any prompt to close the application.🧾 Sample Queries & OutputsQuery: space missionResult: Ranked list of files from sci.space with high TF-IDF scores.Query: windows graphicsResult: High relevance scores for documents containing both terms across comp.graphics and comp.os.ms-windows.misc.
+# 📄 Mini Search Engine in C++ (TF-IDF Based)
+
+A lightweight **file-based search engine** implemented in **C++**, featuring **inverted indexing**, **TF-IDF ranking**, **persistent indexing**, and **multi-word query support** over a document corpus such as *20 Newsgroups*.
+
+---
+
+## 🧠 Approach & Design
+
+The project is designed in two main phases:
+
+### 1️⃣ Indexing Phase (Offline)
+- Recursively crawls the dataset directory.
+- Extracts and preprocesses tokens from each document.
+- Builds an **inverted index** mapping:
+
+- Stores document paths and term frequencies.
+- Serializes the index to disk (`index.bin`) to avoid re-indexing on future runs.
+
+### 2️⃣ Search Phase (Online)
+- Accepts **multi-word queries**.
+- Preprocesses query terms (lowercasing, filtering, stopword removal).
+- Computes **TF-IDF scores** for each document.
+- Ranks documents by relevance.
+- Displays results in paginated format (10 results per page).
+
+---
+
+## 🧱 Data Structures Used
+
+| Data Structure | Purpose |
+|----------------|---------|
+| `unordered_map<string, vector<Posting>>` | Inverted index for fast keyword lookup |
+| `unordered_map<int, string>` | Maps document IDs to file paths |
+| `unordered_set<string>` | Stopword filtering |
+| `vector<Posting>` | Stores (docID, term frequency) pairs |
+| `unordered_map<int, double>` | Accumulates TF-IDF scores during search |
+| `vector<SearchResult>` | Sorted list of ranked results |
+
+---
+
+## ⏱️ Time & Space Complexity
+
+### Indexing Phase
+- **Time Complexity:**  
+`O(Total Tokens)`  
+(Each token is processed once)
+
+- **Space Complexity:**  
+`O(V + P)`  
+where:
+- `V` = number of unique tokens  
+- `P` = total postings across all documents
+
+### Search Phase
+- **Time Complexity:**  
+`O(Q × Pq)`  
+where:
+- `Q` = number of query terms  
+- `Pq` = average postings per term
+
+- **Space Complexity:**  
+`O(D)`  
+where `D` is the number of matched documents.
+
+---
+
+## ▶️ How to Run the Project
+
+### 1️⃣ Compile
+```bash
+g++ -std=c++17 main.cpp -o search_engine
+./search_engine
